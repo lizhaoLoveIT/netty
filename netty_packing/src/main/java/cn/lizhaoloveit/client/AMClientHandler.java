@@ -21,9 +21,17 @@ public class AMClientHandler extends ChannelInboundHandlerAdapter {
      */
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
+//        for (int i = 0; i < 200; i++) {
+//            ctx.writeAndFlush(message);
+//        }
+        byte[] bytes = message.getBytes();
+        ByteBuf buf = null;
         for (int i = 0; i < 200; i++) {
-            ctx.writeAndFlush(message);
+            buf = Unpooled.buffer(bytes.length);
+            buf.writeBytes(bytes);
+            ctx.writeAndFlush(buf);
         }
+
     }
 
     @Override
