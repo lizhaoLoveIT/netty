@@ -1,5 +1,6 @@
 package cn.lizhaoloveit.server;
 
+import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -8,7 +9,13 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
+import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.concurrent.GlobalEventExecutor;
+import io.netty.util.concurrent.ScheduledFuture;
+
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 /**
  * DESCRIPTION:
@@ -58,6 +65,21 @@ public class AMServerHandler extends ChannelInboundHandlerAdapter {
         // remove() 方法的应用场景是，讲一个 Active 状态的 channel 移除 group 时使用。
         // group.remove(channel);
         group.writeAndFlush(new TextWebSocketFrame(channel.remoteAddress() + "下线了"));
+    }
+
+    // 处理用户事件的触发
+    @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+
+        if (evt instanceof IdleStateEvent) {
+            IdleStateEvent event = (IdleStateEvent) evt;
+            switch (event.state()) {
+                case READER_IDLE: {
+                    ctx.channel().writeAndFlush(new TextWebSocketFrame("30秒内未应答，您与服务器已经断开连接"));
+                    ctx.channel().close();
+                }
+            }
+        }
     }
 
     @Override

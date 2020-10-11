@@ -24,7 +24,10 @@ import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
+import io.netty.handler.codec.string.StringDecoder;
+import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.AttributeKey;
 
 /**
@@ -80,6 +83,10 @@ public class WebSocketServer implements AMHttpService, AMWebSocketService {
                 pipeline.addLast(new HttpServerCodec());
                 pipeline.addLast(new ChunkedWriteHandler());
                 pipeline.addLast(new HttpObjectAggregator(MAX_CONTENT_LENGTH));
+                // 3 秒内服务器没有发生读操作，则会触发读操作空闲事件 code 0 to disable
+                // 5 秒内服务器没有发生写操作，则会触发读操作空闲事件 code 0 to disable
+                // x 秒内服务器没有读或没有写操作，则会触发事件，code 0 to disable
+                pipeline.addLast(new  IdleStateHandler(30, 0, 0));
                 // 设置 websocket 服务处理方式
                 pipeline.addLast(new AMServerHandler(WebSocketServer.this, WebSocketServer.this));
             }
